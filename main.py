@@ -5,6 +5,8 @@ import praw
 import urllib.request, urllib.parse
 import xmltodict
 import os
+from SearchEngine import SearchEngine
+
 
 # True = récupérer les données depuis les APIs Reddit/Arxiv
 # False = charger depuis un CSV déjà existant
@@ -155,7 +157,88 @@ def tests_td5(corpus):
         nb_commentaires=1
     )
     print("Document créé via Factory :", doc_test)
+    
+def tests_td6(corpus):
+    moteur = corpus.search_engine
 
+    print("\n===== TESTS TD6 =====\n")
+
+    motif = input("Motif à rechercher (regex) : ").strip()
+    if not motif:
+        print("Motif vide. Retour au menu.")
+        return
+
+    matches = moteur.search_regex(motif)
+    print(f"\nNombre d'occurrences trouvées : {len(matches)}")
+
+    choix = input("Afficher la concordance ? (o/n) : ").strip().lower()
+    if choix == "o":
+        concorde_df = moteur.concorde(motif)
+        print("\nConcordance (5 premières lignes) :")
+        print(concorde_df.head())
+
+    choix = input("Afficher les statistiques TF/DF ? (o/n) : ").strip().lower()
+    if choix == "o":
+        table = moteur.construire_vocabulaire()
+        print("\nTop 10 des mots les plus fréquents :")
+        print(table.head(10))
+
+
+def tests_td7(corpus):
+    moteur = corpus.search_engine
+
+    print("\n===== TESTS TD7 : MOTEUR DE RECHERCHE =====\n")
+
+    while True:
+        requete = input("Requête (vide pour revenir au menu) : ").strip()
+        if not requete:
+            break
+
+        k_str = input("Nombre de documents à afficher (défaut 5) : ").strip()
+        try:
+            k = int(k_str) if k_str else 5
+        except ValueError:
+            print("Nombre invalide.")
+            continue
+
+        resultats = moteur.search(requete, k)
+
+        if resultats.empty:
+            print("\nAucun document trouvé.\n")
+            continue
+
+        print("\nRésultats :\n")
+        for _, row in resultats.iterrows():
+            print(f"- [score={row['score']}] {row['titre']} – {row['auteur']}")
+
+
+def menu(corpus):
+    while True:
+        print("\n========= MENU =========")
+        print("0 - TD3 : statistiques du corpus")
+        print("1 - TD4 : tri, affichage, sauvegarde")
+        print("2 - TD5 : héritage, singleton, factory")
+        print("3 - TD6 : regex, concordance, stats TF/DF")
+        print("4 - TD7 : moteur de recherche")
+        print("5 - Quitter")
+
+        choix = input("Votre choix : ").strip()
+
+        if choix == "0":
+            tests_td3(corpus)
+        elif choix == "1":
+            tests_td4(corpus)
+        elif choix == "2":
+            tests_td5(corpus)
+        elif choix == "3":
+            tests_td6(corpus)
+        elif choix == "4":
+            tests_td7(corpus)
+        elif choix == "5":
+            print("\n👋 Fin du programme.")
+            break
+        else:
+            print("Choix invalide.")
 
 def main():
     if not os.path.exists("data"):
@@ -177,10 +260,9 @@ def main():
             corpus = recuperer_donnees()
             corpus.save("data/corpus.csv")
 
-    # Lancer les tests
-    tests_td3(corpus)
-    tests_td4(corpus)
-    tests_td5(corpus)
+    
+    menu(corpus)
+
 
     # Résumé final
     print(f"{corpus.ndoc} documents, {corpus.naut} auteurs")

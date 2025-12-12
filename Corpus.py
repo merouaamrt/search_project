@@ -1,9 +1,8 @@
-
-from Document import Document, RedditDocument, ArxivDocument
-from Author import Author
+from SearchEngine import SearchEngine
 import pandas as pd
+from Author import Author
+from Document import RedditDocument, ArxivDocument
 from datetime import datetime
-
 
 
 class Corpus:
@@ -14,25 +13,28 @@ class Corpus:
         self.ndoc = 0
         
         self.naut = 0
+        self.search_engine = SearchEngine(self)
+
 
     def ajouter_document(self, doc):
         """Ajoute un document au corpus"""
         doc_id = self.ndoc
         self.id2doc[doc_id] = doc
-        
         self.ndoc += 1
 
-        # Gestion des auteurs
+    # Gestion des auteurs
         if doc.getType() == "Arxiv":
             auteurs = doc.auteurs
         else:
-            auteurs = [doc.auteur]
+           auteurs = [doc.auteur]
 
         for auteur in auteurs:
             if auteur not in self.authors:
-                self.authors[auteur] = Author(auteur)
-                self.naut += 1
+              self.authors[auteur] = Author(auteur)
+              self.naut += 1
             self.authors[auteur].add(doc)
+
+
 
     # =====MÉTHODES D'AFFICHAGE TRIÉES =====
     
@@ -134,6 +136,15 @@ class Corpus:
         print(f"   - Extrait : {texte_complet[:150]}...")
         
         return texte_complet
+    def chaine_concatenee(self):
+        """
+    TD6 – concatène tous les textes du corpus en une seule chaîne
+    """
+        textes = []
+        for doc in self.id2doc.values():
+            if doc.texte:
+              textes.append(doc.texte)
+        return " ".join(textes)
 
     # ===== TD4 Partie 3.3 et 3.4 : SAUVEGARDE ET CHARGEMENT =====
     
